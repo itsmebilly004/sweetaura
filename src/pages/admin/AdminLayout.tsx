@@ -15,13 +15,18 @@ const AdminLayout = () => {
 
   const handleLogout = async () => {
     await signOut();
-    navigate('/login');
+    navigate('/admin');
   };
 
   const navItems = [
-    { href: "/admin/products", icon: Package, label: "Products" },
+    { href: "/admin/dashboard/products", icon: Package, label: "Products" },
     { href: "/", icon: Home, label: "Storefront" },
   ];
+
+  const isActive = (path: string) => {
+    if (path === "/") return location.pathname === path;
+    return location.pathname.startsWith(path);
+  };
 
   return (
     <div className="flex min-h-screen w-full bg-muted/40">
@@ -33,7 +38,7 @@ const AdminLayout = () => {
                 <Link
                   to={item.href}
                   className={`flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:text-foreground md:h-8 md:w-8 ${
-                    location.pathname === item.href ? "bg-accent text-accent-foreground" : ""
+                    isActive(item.href) ? "bg-accent text-accent-foreground" : ""
                   }`}
                 >
                   <item.icon className="h-5 w-5" />

@@ -1,11 +1,27 @@
-import { ShoppingCart } from "lucide-react";
-import { Link } from "react-router-dom";
+import { ShoppingCart, LogOut, User as UserIcon, Shield } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Navigation = () => {
   const { items } = useCart();
+  const { user, role, signOut, loading } = useAuth();
+  const navigate = useNavigate();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/");
+  };
 
   return (
     <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
@@ -16,8 +32,8 @@ const Navigation = () => {
           </h1>
         </Link>
         
-        <div className="flex items-center gap-8">
-          <Link to="/" className="text-foreground hover:text-primary transition-colors">
+        <div className="flex items-center gap-4">
+          <Link to="/" className="text-foreground hover:text-primary transition-colors hidden sm:block">
             Home
           </Link>
           <Link to="/products" className="text-foreground hover:text-primary transition-colors">
@@ -33,6 +49,45 @@ const Navigation = () => {
               )}
             </Button>
           </Link>
+
+          {!loading && (
+            <div className="flex items-center gap-2">
+              {user ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="icon" className="rounded-full">
+                      <UserIcon className="h-5 w-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    {role === 'admin' && (
+                      <DropdownMenuItem asChild>
+                        <Link to="/admin/dashboard">
+                          <Shield className="mr-2 h-4 w-4" />
+                          <span>Admin Dashboard</span>
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="hidden sm:flex items-center gap-2">
+                   <Link to="/login">
+                    <Button variant="ghost">Login</Button>
+                  </Link>
+                  <Link to="/signup">
+                    <Button>Sign Up</Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </nav>

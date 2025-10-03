@@ -65,7 +65,7 @@ const AdminProducts = () => {
     <>
       <div className="flex items-center pt-4">
         <div className="ml-auto flex items-center gap-2">
-          <Link to="/admin/products/new">
+          <Link to="/admin/dashboard/products/new">
             <Button size="sm" className="h-7 gap-1">
               <PlusCircle className="h-3.5 w-3.5" />
               <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -142,7 +142,7 @@ const AdminProducts = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem asChild>
-                            <Link to={`/admin/products/${product.id}/edit`}>Edit</Link>
+                            <Link to={`/admin/dashboard/products/${product.id}/edit`}>Edit</Link>
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-destructive"

@@ -2,15 +2,18 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import ProtectedRoute from "@/components/ProtectedRoute";
+import AdminRoute from "@/components/AdminRoute";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
 import ProductDetail from "./pages/ProductDetail";
 import Cart from "./pages/Cart";
 import Login from "./pages/Login";
+import SignUp from "./pages/SignUp";
+import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminProducts from "./pages/admin/AdminProducts";
 import ProductForm from "./pages/admin/ProductForm";
@@ -33,10 +36,15 @@ const App = () => (
               <Route path="/product/:id" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<SignUp />} />
 
-              {/* Admin Routes */}
-              <Route path="/admin" element={<ProtectedRoute />}>
+              {/* Admin Login */}
+              <Route path="/admin" element={<AdminLogin />} />
+
+              {/* Protected Admin Dashboard Routes */}
+              <Route path="/admin/dashboard" element={<AdminRoute />}>
                 <Route element={<AdminLayout />}>
+                  <Route index element={<Navigate to="products" replace />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="products/new" element={<ProductForm />} />
                   <Route path="products/:id/edit" element={<ProductForm />} />

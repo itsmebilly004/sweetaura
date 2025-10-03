@@ -160,7 +160,7 @@ const ProductForm = () => {
     onSuccess: () => {
       toast.success(`Product ${isEditMode ? "updated" : "created"} successfully`);
       queryClient.invalidateQueries({ queryKey: ["admin-products"] });
-      navigate("/admin/products");
+      navigate("/admin/dashboard/products");
     },
     onError: (error) => {
       toast.error(`Error: ${error.message}`);
@@ -266,7 +266,7 @@ const ProductForm = () => {
           </div>
           
           <div className="flex justify-end gap-2">
-            <Button variant="outline" type="button" onClick={() => navigate("/admin/products")}>
+            <Button variant="outline" type="button" onClick={() => navigate("/admin/dashboard/products")}>
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting}>
