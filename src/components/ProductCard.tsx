@@ -39,7 +39,7 @@ const ProductCard = ({ id, name, price, image_url, in_stock }: ProductCardProps)
         </div>
         <CardContent className="p-4">
           <h3 className="font-semibold text-lg mb-2 line-clamp-1">{name}</h3>
-          <p className="text-2xl font-bold text-primary">${price.toFixed(2)}</p>
+          <p className="text-2xl font-bold text-primary">KES{price.toFixed(2)}</p>
         </CardContent>
         <CardFooter className="p-4 pt-0">
           <Button

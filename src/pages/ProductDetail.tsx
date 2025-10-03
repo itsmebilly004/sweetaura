@@ -110,7 +110,7 @@ const ProductDetail = () => {
             )}
             <h1 className="text-4xl font-bold mb-4">{product.name}</h1>
             <p className="text-4xl font-bold text-primary mb-6">
-              ${Number(product.price).toFixed(2)}
+              KES{Number(product.price).toFixed(2)}
             </p>
 
             {product.description && (
