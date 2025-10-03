@@ -11,10 +11,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "./ui/skeleton";
 
 const Navigation = () => {
-  const { items } = useCart();
-  const { user, role, signOut, loading } = useAuth();
+  const { items, loading: cartLoading } = useCart();
+  const { user, role, signOut, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -42,7 +43,7 @@ const Navigation = () => {
           <Link to="/cart">
             <Button variant="outline" size="icon" className="relative">
               <ShoppingCart className="h-5 w-5" />
-              {itemCount > 0 && (
+              {itemCount > 0 && !cartLoading && (
                 <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {itemCount}
                 </span>
@@ -50,7 +51,9 @@ const Navigation = () => {
             </Button>
           </Link>
 
-          {!loading && (
+          {authLoading ? (
+            <Skeleton className="h-10 w-24" />
+          ) : (
             <div className="flex items-center gap-2">
               {user ? (
                 <DropdownMenu>

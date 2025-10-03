@@ -9,51 +9,46 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, role, loading: authLoading } = useAuth();
+  const { user, role, loading: authLoading, signOut } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && user && role === 'admin') {
-      navigate("/admin/dashboard/products");
+    // This effect runs when the authentication state changes.
+    if (!authLoading) {
+      if (user) {
+        if (role === 'admin') {
+          navigate("/admin/dashboard/products", { replace: true });
+        } else {
+          // If a non-admin user somehow lands here and is logged in,
+          // log them out and show an error.
+          signOut();
+          setError("Access denied. You do not have admin privileges.");
+        }
+      }
     }
-  }, [user, role, authLoading, navigate]);
+  }, [user, role, authLoading, navigate, signOut]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError(null);
-    try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      
-      // Check user role after successful sign-in
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', data.user.id)
-        .single();
-        
-      if (profile?.role === 'admin') {
-        navigate("/admin/dashboard/products");
-      } else {
-        await supabase.auth.signOut();
-        setError("Access denied. You do not have admin privileges.");
-      }
 
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
     }
+    // The useEffect will handle the redirect on successful login
+    setIsSubmitting(false);
   };
-  
-  if (authLoading || (user && role === 'admin')) {
+
+  if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         Loading...
@@ -94,8 +89,8 @@ const AdminLogin = () => {
               />
             </div>
             {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? "Signing in..." : "Sign In"}
             </Button>
           </form>
         </CardContent>

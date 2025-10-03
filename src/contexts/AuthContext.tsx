@@ -19,34 +19,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getSessionAndProfile = async () => {
-      const { data: { session }, error } = await supabase.auth.getSession();
-      if (error) {
-        console.error("Error getting session:", error);
-        setLoading(false);
-        return;
-      }
-
+    // Check for an active session on initial load
+    const getInitialSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
           .eq("id", session.user.id)
           .single();
-        
         setSession(session);
         setUser(session.user);
         setRole(profile?.role || null);
-      } else {
-        setSession(null);
-        setUser(null);
-        setRole(null);
       }
       setLoading(false);
     };
+    
+    getInitialSession();
 
-    getSessionAndProfile();
-
+    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         if (session) {
@@ -55,7 +46,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .select("role")
             .eq("id", session.user.id)
             .single();
-
           setSession(session);
           setUser(session.user);
           setRole(profile?.role || null);
@@ -64,7 +54,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setRole(null);
         }
-        // No need to setLoading here as it's for initial load
+        setLoading(false);
       }
     );
 
@@ -75,9 +65,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setRole(null);
   };
 
   return (

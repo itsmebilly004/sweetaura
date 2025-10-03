@@ -14,30 +14,31 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
+    // Redirect any logged-in user away from the login page.
     if (!authLoading && user) {
-      navigate("/");
+      navigate("/", { replace: true });
     }
   }, [user, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setIsSubmitting(true);
     setError(null);
-    try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      navigate("/");
-    } catch (error: any) {
-      setError(error.message);
-    } finally {
-      setLoading(false);
+    
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
     }
+    // The onAuthStateChange listener in AuthContext will handle state updates,
+    // and the useEffect in this component will handle the redirect.
+    setIsSubmitting(false);
   };
 
   if (authLoading || user) {
@@ -83,8 +84,8 @@ const Login = () => {
                 />
               </div>
               {error && <p className="text-destructive text-sm">{error}</p>}
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Signing in..." : "Sign In"}
+              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                {isSubmitting ? "Signing in..." : "Sign In"}
               </Button>
             </form>
           </CardContent>
