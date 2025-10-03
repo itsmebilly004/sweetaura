@@ -125,7 +125,7 @@ ${details.screenshotUrl}
         order_id: orderId,
         product_id: item.id,
         quantity: item.quantity,
-        price_at_purchase: item.price, // <-- CORRECTED COLUMN NAME
+        price_at_purchase: item.price,
       }));
 
       const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
