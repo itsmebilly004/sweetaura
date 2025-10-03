@@ -19,36 +19,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for an active session on initial load
-    const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", session.user.id)
-          .single();
-        setSession(session);
-        setUser(session.user);
-        setRole(profile?.role || null);
-      }
-      setLoading(false);
-    };
-    
-    getInitialSession();
-
-    // Listen for auth state changes
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        setLoading(true);
         if (session) {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", session.user.id)
-            .single();
+          const { data, error } = await supabase.rpc('get_user_role', { p_user_id: session.user.id });
+          if (error) {
+            console.error("Error fetching user role:", error);
+            setRole(null);
+          } else {
+            setRole(data);
+          }
           setSession(session);
           setUser(session.user);
-          setRole(profile?.role || null);
         } else {
           setSession(null);
           setUser(null);
@@ -57,6 +40,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     );
+
+    // Initial check for session
+    const checkUser = async () => {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+            const { data, error } = await supabase.rpc('get_user_role', { p_user_id: session.user.id });
+            if (error) {
+              console.error("Error fetching user role on initial load:", error);
+              setRole(null);
+            } else {
+              setRole(data);
+            }
+            setSession(session);
+            setUser(session.user);
+        }
+        setLoading(false);
+    };
+    checkUser();
 
     return () => {
       authListener.subscription.unsubscribe();

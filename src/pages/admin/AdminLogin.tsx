@@ -9,45 +9,56 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const AdminLogin = () => {
   const navigate = useNavigate();
-  const { user, role, loading: authLoading, signOut } = useAuth();
+  const { user, role, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // This effect runs when the authentication state changes.
-    if (!authLoading) {
-      if (user) {
-        if (role === 'admin') {
-          navigate("/admin/dashboard/products", { replace: true });
-        } else {
-          // If a non-admin user somehow lands here and is logged in,
-          // log them out and show an error.
-          signOut();
-          setError("Access denied. You do not have admin privileges.");
-        }
-      }
+    if (!authLoading && user && role === 'admin') {
+      navigate("/admin/dashboard/products", { replace: true });
     }
-  }, [user, role, authLoading, navigate, signOut]);
+  }, [user, role, authLoading, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (signInError) {
-      setError(signInError.message);
+      if (signInError) throw signInError;
+
+      if (data.user) {
+        // Use the reliable RPC function to get the user's role
+        const { data: userRole, error: rpcError } = await supabase.rpc('get_user_role', { p_user_id: data.user.id });
+
+        if (rpcError) {
+          await supabase.auth.signOut();
+          throw new Error("Could not retrieve user profile. Please contact support.");
+        }
+        
+        if (userRole === 'admin') {
+          // The onAuthStateChange listener will handle setting the context state,
+          // which will trigger the useEffect to navigate. For immediate feedback:
+          navigate("/admin/dashboard/products");
+        } else {
+          await supabase.auth.signOut();
+          throw new Error("Access denied. You do not have admin privileges.");
+        }
+      }
+    } catch (error: any) {
+      setError(error.message);
+    } finally {
+      setIsSubmitting(false);
     }
-    // The useEffect will handle the redirect on successful login
-    setIsSubmitting(false);
   };
-
+  
   if (authLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -76,6 +87,7 @@ const AdminLogin = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
             <div className="grid gap-2">
@@ -86,11 +98,12 @@ const AdminLogin = () => {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
               />
             </div>
-            {error && <p className="text-destructive text-sm">{error}</p>}
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Sign In"}
+            {error && <p className="text-destructive text-sm text-center pt-2">{error}</p>}
+            <Button type="submit" className="w-full mt-2" disabled={isSubmitting}>
+              {isSubmitting ? "Verifying..." : "Sign In"}
             </Button>
           </form>
         </CardContent>
