@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
-import { Home, Package, Users, LogOut } from "lucide-react";
+import { Home, Package, Users, LogOut, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import {
@@ -19,6 +19,7 @@ const AdminLayout = () => {
   };
 
   const navItems = [
+    { href: "/admin/dashboard/orders", icon: ShoppingCart, label: "Orders" },
     { href: "/admin/dashboard/products", icon: Package, label: "Products" },
     { href: "/", icon: Home, label: "Storefront" },
   ];

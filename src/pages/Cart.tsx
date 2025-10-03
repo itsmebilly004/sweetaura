@@ -1,12 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import Navigation from "@/components/Navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 
 const Cart = () => {
   const { items, removeItem, updateQuantity, total } = useCart();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleCheckout = () => {
+    if (user) {
+      navigate("/checkout");
+    } else {
+      toast.info("Please log in to proceed to checkout.");
+      navigate("/login", { state: { from: "/checkout" } });
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -114,11 +127,9 @@ const Cart = () => {
                 </div>
               </div>
 
-              <Link to="/checkout">
-                <Button className="w-full mb-3" size="lg">
-                  Proceed to Checkout
-                </Button>
-              </Link>
+              <Button onClick={handleCheckout} className="w-full mb-3" size="lg">
+                Proceed to Checkout
+              </Button>
               <Link to="/products">
                 <Button variant="outline" className="w-full">
                   Continue Shopping

@@ -12,13 +12,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const STANDARD_DELIVERY_FEE = 150;
 
+// fullName has been removed from the schema
 const checkoutSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
   phone: z.string().min(10, "A valid phone number is required"),
   address: z.string().min(1, "Delivery address is required"),
   paymentScreenshot: z
@@ -41,7 +42,6 @@ const Checkout = () => {
   const form = useForm<CheckoutFormData>({
     resolver: zodResolver(checkoutSchema),
     defaultValues: {
-      fullName: "",
       phone: "",
       address: "",
     },
@@ -50,27 +50,101 @@ const Checkout = () => {
   const grandTotal = useMemo(() => total + STANDARD_DELIVERY_FEE, [total]);
 
   useEffect(() => {
-    if (user?.user_metadata.full_name) {
-      form.setValue("fullName", user.user_metadata.full_name);
-    }
-  }, [user, form]);
-
-  useEffect(() => {
-    // Redirect if cart is empty, but only if total is 0 (as items might still be loading)
-    if (total === 0 && items.length === 0) {
+    // Redirect if cart is empty
+    if (total === 0 && items.length === 0 && !form.formState.isSubmitting) {
       navigate("/products");
     }
-  }, [items, total, navigate]);
+  }, [items, total, navigate, form.formState.isSubmitting]);
 
-  const onSubmit = (data: CheckoutFormData) => {
-    // Logic for submission will be implemented later
-    console.log("Order submitted:", { ...data, deliveryFee: STANDARD_DELIVERY_FEE, grandTotal });
-    toast.success("Order submitted successfully!", {
-      description: "We will verify your payment and contact you shortly.",
-    });
-    // Placeholder logic: clear cart and redirect after submission
-    // clearCart();
-    // navigate("/");
+  const sendWhatsAppMessage = (details: { orderId: string; screenshotUrl: string; customerName: string } & CheckoutFormData) => {
+    const WHATSAPP_NUMBER = "+254796177431";
+    const itemsText = items.map(item => `- ${item.name} x${item.quantity}`).join('\n');
+
+    const message = `
+*New Order Received!*
+
+*Customer:* ${details.customerName}
+*Phone:* ${details.phone}
+*Address:* ${details.address}
+
+*Items:*
+${itemsText}
+
+*Total Paid:* Ksh ${grandTotal.toFixed(2)}
+
+*Payment Proof:*
+${details.screenshotUrl}
+    `;
+
+    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const onSubmit = async (data: CheckoutFormData) => {
+    try {
+      // Determine customer name automatically
+      const customerName = user?.user_metadata?.full_name || user?.email || "Guest Customer";
+
+      // 1. Upload screenshot
+      const file = data.paymentScreenshot[0];
+      const fileExt = file.name.split('.').pop();
+      const filePath = `${user?.id || 'guests'}/${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('payment-proofs')
+        .upload(filePath, file);
+
+      if (uploadError) throw new Error(`Screenshot upload failed: ${uploadError.message}`);
+
+      const { data: urlData } = supabase.storage
+        .from('payment-proofs')
+        .getPublicUrl(filePath);
+
+      const screenshotUrl = urlData.publicUrl;
+
+      // 2. Insert order and order items
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          user_id: user?.id,
+          customer_name: customerName,
+          customer_phone: data.phone,
+          delivery_address: data.address,
+          subtotal: total,
+          delivery_fee: STANDARD_DELIVERY_FEE,
+          total_amount: grandTotal,
+          payment_proof_url: screenshotUrl,
+        })
+        .select('id')
+        .single();
+      
+      if (orderError) throw new Error(`Failed to save order: ${orderError.message}`);
+      const orderId = orderData.id;
+
+      const orderItems = items.map(item => ({
+        order_id: orderId,
+        product_id: item.id,
+        quantity: item.quantity,
+        price_at_purchase: item.price, // <-- CORRECTED COLUMN NAME
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError) throw new Error(`Failed to save order items: ${itemsError.message}`);
+
+      // 3. Send WhatsApp message and show success
+      sendWhatsAppMessage({ ...data, orderId, screenshotUrl, customerName });
+
+      toast.success("Order submitted successfully!", {
+        description: "We will verify your payment and contact you shortly.",
+      });
+
+      // 4. Clear cart and redirect
+      clearCart();
+      navigate("/");
+
+    } catch (error: any) {
+      toast.error(error.message);
+    }
   };
 
   return (
@@ -118,19 +192,7 @@ const Checkout = () => {
               <CardContent>
                 <Form {...form}>
                   <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                    <FormField
-                      control={form.control}
-                      name="fullName"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Full Name</FormLabel>
-                          <FormControl>
-                            <Input placeholder="e.g. Jane Doe" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                    {/* Full Name Field is removed */}
                     <FormField
                       control={form.control}
                       name="phone"

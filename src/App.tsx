@@ -18,6 +18,7 @@ import AdminLogin from "./pages/admin/AdminLogin";
 import AdminLayout from "./pages/admin/AdminLayout";
 import AdminProducts from "./pages/admin/AdminProducts";
 import ProductForm from "./pages/admin/ProductForm";
+import AdminOrders from "./pages/admin/AdminOrders";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -46,7 +47,8 @@ const App = () => (
               {/* Protected Admin Dashboard Routes */}
               <Route path="/admin/dashboard" element={<AdminRoute />}>
                 <Route element={<AdminLayout />}>
-                  <Route index element={<Navigate to="products" replace />} />
+                  <Route index element={<Navigate to="orders" replace />} />
+                  <Route path="orders" element={<AdminOrders />} />
                   <Route path="products" element={<AdminProducts />} />
                   <Route path="products/new" element={<ProductForm />} />
                   <Route path="products/:id/edit" element={<ProductForm />} />

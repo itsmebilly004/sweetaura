@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -10,18 +10,21 @@ import Navigation from "@/components/Navigation";
 
 const Login = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const from = location.state?.from || "/";
+
   useEffect(() => {
     // Redirect any logged-in user away from the login page.
     if (!authLoading && user) {
-      navigate("/", { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading, navigate, from]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +38,9 @@ const Login = () => {
 
     if (signInError) {
       setError(signInError.message);
+    } else {
+      // On successful login, the useEffect will handle the redirect.
     }
-    // The onAuthStateChange listener in AuthContext will handle state updates,
-    // and the useEffect in this component will handle the redirect.
     setIsSubmitting(false);
   };
 
