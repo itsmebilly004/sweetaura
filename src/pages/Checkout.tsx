@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -15,6 +15,7 @@ import { useNavigate } from "react-router-dom";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const STANDARD_DELIVERY_FEE = 150;
 
 const checkoutSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
@@ -46,6 +47,8 @@ const Checkout = () => {
     },
   });
 
+  const grandTotal = useMemo(() => total + STANDARD_DELIVERY_FEE, [total]);
+
   useEffect(() => {
     if (user?.user_metadata.full_name) {
       form.setValue("fullName", user.user_metadata.full_name);
@@ -53,14 +56,15 @@ const Checkout = () => {
   }, [user, form]);
 
   useEffect(() => {
-    if (items.length === 0) {
+    // Redirect if cart is empty, but only if total is 0 (as items might still be loading)
+    if (total === 0 && items.length === 0) {
       navigate("/products");
     }
-  }, [items, navigate]);
+  }, [items, total, navigate]);
 
   const onSubmit = (data: CheckoutFormData) => {
     // Logic for submission will be implemented later
-    console.log("Order submitted:", data);
+    console.log("Order submitted:", { ...data, deliveryFee: STANDARD_DELIVERY_FEE, grandTotal });
     toast.success("Order submitted successfully!", {
       description: "We will verify your payment and contact you shortly.",
     });
@@ -80,7 +84,7 @@ const Checkout = () => {
               <CardHeader>
                 <CardTitle>Step 1: Payment</CardTitle>
                 <CardDescription>
-                  Please pay <span className="font-bold text-primary">Ksh {total.toFixed(2)}</span> via M-pesa.
+                  Please pay <span className="font-bold text-primary">Ksh {grandTotal.toFixed(2)}</span> via M-pesa.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -94,7 +98,7 @@ const Checkout = () => {
                       Enter Till Number: <strong className="text-foreground">3107416</strong>
                     </li>
                     <li>
-                      Enter the exact amount: <strong className="text-foreground">Ksh {total.toFixed(2)}</strong>
+                      Enter the exact amount: <strong className="text-foreground">Ksh {grandTotal.toFixed(2)}</strong>
                     </li>
                     <li>Enter your M-pesa PIN and send</li>
                     <li>You will receive a confirmation SMS from M-pesa</li>
@@ -186,14 +190,22 @@ const Checkout = () => {
                 {items.map(item => (
                    <div key={item.id} className="flex justify-between items-center text-sm">
                       <span className="font-medium">{item.name} x{item.quantity}</span>
-                      <span className="text-muted-foreground">${(item.price * item.quantity).toFixed(2)}</span>
+                      <span className="text-muted-foreground">Ksh {(item.price * item.quantity).toFixed(2)}</span>
                    </div>
                 ))}
               </div>
-              <div className="border-t pt-4">
+              <div className="border-t pt-4 space-y-2">
+                 <div className="flex justify-between text-muted-foreground">
+                  <span>Subtotal</span>
+                  <span>Ksh {total.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Delivery Fee</span>
+                  <span>Ksh {STANDARD_DELIVERY_FEE.toFixed(2)}</span>
+                </div>
                 <div className="flex justify-between text-xl font-bold">
                   <span>Total</span>
-                  <span className="text-primary">${total.toFixed(2)}</span>
+                  <span className="text-primary">Ksh {grandTotal.toFixed(2)}</span>
                 </div>
               </div>
             </Card>
