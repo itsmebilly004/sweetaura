@@ -2,15 +2,8 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-// VITE environment variables are used to securely store your Supabase credentials.
-// The VITE_ prefix is a requirement for them to be exposed to the browser.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-// Throw an error if the Supabase credentials are not set.
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY) {
-  throw new Error("Supabase URL and Anon Key are required.");
-}
+const SUPABASE_URL = "https://wuifotpzonzkhqchsomb.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Ind1aWZvdHB6b256a2hxY2hzb21iIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzNTU1NDksImV4cCI6MjA3NDkzMTU0OX0.OaEOBfy3eZ9ZHO_KHwg8gNMwW13PI_rLsTol4rooiic";
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
