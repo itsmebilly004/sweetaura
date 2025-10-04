@@ -1,4 +1,4 @@
-import { ShoppingCart, LogOut, User as UserIcon, Shield } from "lucide-react";
+import { ShoppingCart, LogOut, User as UserIcon, Shield, Package } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/contexts/CartContext";
@@ -65,6 +65,12 @@ const Navigation = () => {
                   <DropdownMenuContent align="end">
                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                      <Link to="/orders">
+                        <Package className="mr-2 h-4 w-4" />
+                        <span>My Orders</span>
+                      </Link>
+                    </DropdownMenuItem>
                     {role === 'admin' && (
                       <DropdownMenuItem asChild>
                         <Link to="/admin/dashboard">

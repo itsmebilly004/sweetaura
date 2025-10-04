@@ -10,6 +10,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -39,15 +40,33 @@ const AdminOrders = () => {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select(`*`) // Select all columns for mutations
+        .select(`*`)
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data;
     },
   });
 
-  // Mutation to update order status
+  // NEW: Mutation to update order status to 'approved'
   const approveOrderMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const { error } = await supabase
+        .from("orders")
+        .update({ status: 'approved' })
+        .eq('id', orderId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Order approved and is now awaiting delivery.");
+      queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
+    },
+    onError: (error) => {
+      toast.error(`Failed to approve order: ${error.message}`);
+    },
+  });
+
+  // MODIFIED: This mutation now marks the order as 'delivered'
+  const deliverOrderMutation = useMutation({
     mutationFn: async (orderId: string) => {
       const { error } = await supabase
         .from("orders")
@@ -60,7 +79,7 @@ const AdminOrders = () => {
       queryClient.invalidateQueries({ queryKey: ["admin-orders"] });
     },
     onError: (error) => {
-      toast.error(`Failed to approve order: ${error.message}`);
+      toast.error(`Failed to deliver order: ${error.message}`);
     },
   });
 
@@ -119,8 +138,9 @@ const AdminOrders = () => {
                       <Badge
                         variant="outline"
                         className={cn({
-                          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700": order.status === 'delivered',
                           "bg-yellow-100 text-yellow-800 border-yellow-200 dark:bg-yellow-900/40 dark:text-yellow-300 dark:border-yellow-700": order.status === 'pending',
+                          "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-700": order.status === 'approved',
+                          "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-700": order.status === 'delivered',
                         })}
                       >
                         {order.status}
@@ -149,10 +169,17 @@ const AdminOrders = () => {
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem
                             onSelect={() => approveOrderMutation.mutate(order.id)}
-                            disabled={order.status === 'delivered'}
+                            disabled={order.status !== 'pending'}
+                          >
+                            Approve Order
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onSelect={() => deliverOrderMutation.mutate(order.id)}
+                            disabled={order.status !== 'approved'}
                           >
                             Mark as Delivered
                           </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-destructive"
                             onSelect={() => setOrderToDelete(order)}
