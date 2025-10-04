@@ -57,7 +57,7 @@ const Checkout = () => {
   }, [items, total, navigate, form.formState.isSubmitting]);
 
   const sendWhatsAppMessage = (details: { orderId: string; screenshotUrl: string; customerName: string } & CheckoutFormData) => {
-    const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER;
+    const WHATSAPP_NUMBER = "+254796177431";
     const itemsText = items.map(item => `- ${item.name} x${item.quantity}`).join('\n');
 
     const message = `
@@ -277,3 +277,5 @@ ${details.screenshotUrl}
     </div>
   );
 };
+
+export default Checkout;

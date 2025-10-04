@@ -4,6 +4,7 @@ import Navigation from "@/components/Navigation";
 import ProductCard from "@/components/ProductCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero-cakes.jpg";
 
 const Home = () => {
   const { data: featuredProducts, isLoading } = useQuery({
@@ -29,7 +30,7 @@ const Home = () => {
       <section className="relative h-[600px] overflow-hidden">
         <div 
           className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(https://placehold.co/1920x600/fff4f4/ff6b6b?text=Sweet+Aura+Cakes)` }}
+          style={{ backgroundImage: `url(${heroImage})` }}
         >
           <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
         </div>
