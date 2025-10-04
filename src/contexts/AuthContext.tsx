@@ -19,46 +19,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // onAuthStateChange is the single source of truth.
+    // It fires immediately with the cached session on initial load,
+    // and then again whenever the auth state changes.
     const { data: authListener } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setLoading(true);
-        if (session) {
-          const { data, error } = await supabase.rpc('get_user_role', { p_user_id: session.user.id });
+        setSession(session);
+        const currentUser = session?.user || null;
+        setUser(currentUser);
+
+        // If a user exists, fetch their role. Otherwise, clear it.
+        if (currentUser) {
+          const { data, error } = await supabase.rpc('get_user_role', { p_user_id: currentUser.id });
           if (error) {
             console.error("Error fetching user role:", error);
             setRole(null);
           } else {
             setRole(data);
           }
-          setSession(session);
-          setUser(session.user);
         } else {
-          setSession(null);
-          setUser(null);
           setRole(null);
         }
+        
+        // The loading state is set to false only after the initial check is complete.
         setLoading(false);
       }
     );
 
-    // Initial check for session
-    const checkUser = async () => {
-        const { data: { session } } = await supabase.auth.getSession();
-        if (session) {
-            const { data, error } = await supabase.rpc('get_user_role', { p_user_id: session.user.id });
-            if (error) {
-              console.error("Error fetching user role on initial load:", error);
-              setRole(null);
-            } else {
-              setRole(data);
-            }
-            setSession(session);
-            setUser(session.user);
-        }
-        setLoading(false);
-    };
-    checkUser();
-
+    // Cleanup the listener when the component unmounts
     return () => {
       authListener.subscription.unsubscribe();
     };
@@ -71,7 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   return (
     <AuthContext.Provider value={{ user, session, loading, role, signOut }}>
       {children}
-    </AuthContext.Provider>
+    </Auth-context.Provider>
   );
 };
 
